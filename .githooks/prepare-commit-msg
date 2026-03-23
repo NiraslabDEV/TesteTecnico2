@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+# Remove linhas "Made-with: Cursor" / Co-authored-by do Cursor antes de gravar o commit.
+MSG_FILE="$1"
+[ -z "$MSG_FILE" ] && exit 0
+[ ! -f "$MSG_FILE" ] && exit 0
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+node "$SCRIPT_DIR/strip-cursor-trailer.cjs" "$MSG_FILE"

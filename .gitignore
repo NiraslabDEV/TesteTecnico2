@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cópia local do logo (versão em repo: public/imagem-aboutus.png)
+/imagem-aboutus.png

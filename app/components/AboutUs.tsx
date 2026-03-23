@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function AboutUs() {
   return (
     /* About us section: 1054×691.49px, white bg */
@@ -15,8 +17,7 @@ export default function AboutUs() {
         className="max-w-[1054px] mx-auto relative"
         style={{ minHeight: "691.49px" }}
       >
-        {/* Photo / image area: left side, 660×489.53px, opacity 0.35, border-radius 1.46px */}
-        {/* Using a construction image placeholder */}
+        {/* Área da imagem / marca — logo About us (imagem-aboutus.png) */}
         <div
           style={{
             position: "absolute",
@@ -27,18 +28,19 @@ export default function AboutUs() {
             borderRadius: "1.46px",
             overflow: "hidden",
             boxShadow: "0px 5.85px 5.85px -2.93px rgba(17,24,39,0.04), 0px 14.63px 17.56px -2.93px rgba(17,24,39,0.10)",
-            opacity: 0.35,
-            backgroundColor: "#4A5568",
+            backgroundColor: "#F8FAFC",
           }}
         >
-          {/* Construction site placeholder gradient */}
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              background: "linear-gradient(135deg, #2947A9 0%, #0379B9 50%, #3D445C 100%)",
-            }}
-          />
+          <div className="relative h-full w-full p-8 md:p-12 box-border">
+            <Image
+              src="/imagem-aboutus.png"
+              alt="Ettic Construction — identidade visual"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, 660px"
+              priority
+            />
+          </div>
         </div>
 
         {/* Blue info panel: right side, 357.09×382.7px at x:614.66, y:107.56 */}

@@ -1,7 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 const categories = ["All", "Commercial", "Residential", "Other"];
+
+/** 4 cartões por página = grelha 2×2 (Figma) */
+const PAGE_SIZE = 4;
 
 interface Project {
   id: number;
@@ -11,7 +14,7 @@ interface Project {
   image: string;
 }
 
-const projects: Project[] = [
+const baseProjects: Project[] = [
   {
     id: 1,
     title: "Radisson Hotel",
@@ -46,104 +49,109 @@ const projects: Project[] = [
   },
 ];
 
+/** Imagens reutilizadas (Unsplash) para projetos extra — 16 itens → 5 páginas em “All” (4 por página) */
+const ROTATING_IMAGES = [
+  "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80",
+  "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80",
+  "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=600&q=80",
+  "https://images.unsplash.com/photo-1494526585095-c41746248156?w=600&q=80",
+  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80",
+  "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80",
+];
+
+const projects: Project[] = [
+  ...baseProjects,
+  ...Array.from({ length: 16 }, (_, i) => {
+    const n = i + 5;
+    const cat = ["Commercial", "Residential", "Other"][i % 3] as
+      | "Commercial"
+      | "Residential"
+      | "Other";
+    return {
+      id: n,
+      title: `Project ${n}`,
+      location: "Maputo",
+      category: cat,
+      image: ROTATING_IMAGES[i % ROTATING_IMAGES.length],
+    };
+  }),
+];
+
 export default function Projects() {
   const [active, setActive] = useState("All");
   const [page, setPage] = useState(0);
 
-  const filtered =
-    active === "All"
-      ? projects
-      : projects.filter((p) => p.category === active);
+  const filtered = useMemo(
+    () =>
+      active === "All"
+        ? projects
+        : projects.filter((p) => p.category === active),
+    [active]
+  );
 
-  const isAll = active === "All";
-  /** Em "All" mostra todos os projetos; com filtro, um por página. */
-  const safePage = isAll
-    ? 0
-    : Math.min(page, Math.max(0, filtered.length - 1));
-  const visible = isAll
-    ? filtered
-    : filtered.length
-      ? [filtered[safePage]]
-      : [];
-  const showPagination = !isAll && filtered.length > 1;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageSlice = useMemo(
+    () =>
+      filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE),
+    [filtered, safePage]
+  );
+
+  const showPagination = totalPages > 1;
+
+  const goBack = () => setPage((p) => Math.max(0, p - 1));
+  const goNext = () => setPage((p) => Math.min(totalPages - 1, p + 1));
+
+  const setFilter = (cat: string) => {
+    setActive(cat);
+    setPage(0);
+  };
 
   return (
-    <section
-      id="projects"
-      style={{
-        width: "100%",
-        minHeight: "803.44px",
-        backgroundColor: "#FFFFFF",
-        paddingTop: "60px",
-        paddingBottom: "60px",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "1054px",
-          margin: "0 auto",
-          padding: "0 40px",
-          display: "flex",
-          gap: "24px",
-          alignItems: "flex-start",
-        }}
-      >
-        {/* ── Left Sidebar ── */}
-        <div style={{ width: "260px", flexShrink: 0 }}>
-          {/* Title */}
+    <section id="projects" className="w-full bg-white py-16">
+      <div className="max-w-[1054px] mx-auto px-6 md:px-10 flex flex-col md:flex-row md:items-start gap-8 md:gap-6">
+        {/* ── Sidebar Figma ── */}
+        <div className="w-full md:w-[260px] shrink-0">
           <h2
+            className="font-bold text-[#292E3D] mb-6 md:mb-9"
             style={{
               fontFamily: "'Work Sans', sans-serif",
-              fontWeight: 700,
               fontSize: "26.34px",
               lineHeight: "1.173em",
-              color: "#292E3D",
-              marginBottom: "36px",
             }}
           >
             Projects
           </h2>
 
-          {/* Filter list */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "20px",
-            }}
-          >
+          <div className="flex flex-row md:flex-col gap-4 md:gap-5 overflow-x-auto pb-2 md:pb-0">
             {categories.map((cat) => (
               <div
                 key={cat}
-                onClick={() => {
-                  setActive(cat);
-                  setPage(0);
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setFilter(cat);
                 }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  cursor: "pointer",
-                  gap: "12px",
-                }}
+                onClick={() => setFilter(cat)}
+                className="flex items-center cursor-pointer gap-3 bg-transparent border-none p-0 whitespace-nowrap"
+                aria-label={`Filter by ${cat}`}
+                aria-pressed={active === cat}
               >
-                {/* Blue left-border indicator */}
                 <div
+                  className="shrink-0 hidden md:block"
                   style={{
                     width: "2.93px",
                     height: "20.49px",
-                    flexShrink: 0,
-                    backgroundColor:
-                      active === cat ? "#2947A9" : "transparent",
+                    backgroundColor: active === cat ? "#2947A9" : "transparent",
                   }}
                 />
                 <span
                   style={{
                     fontFamily: "'Work Sans', sans-serif",
-                    fontWeight: active === cat ? 600 : 400,
                     fontSize: "13.17px",
                     lineHeight: "1.173em",
-                    color: active === cat ? "#2947A9" : "#C2C7D6",
                   }}
+                  className={`${active === cat ? "font-semibold text-[#2947A9] border-b-2 border-[#2947A9] md:border-none" : "font-normal text-[#C2C7D6]"}`}
                 >
                   {cat}
                 </span>
@@ -152,161 +160,146 @@ export default function Projects() {
           </div>
         </div>
 
-        {/* ── Right Content ── */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* 2 × 2 Grid */}
+        {/* ── Grelha 2×2 + paginação Figma ── */}
+        <div className="flex-1 min-w-0">
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "24px",
-            }}
+            className="grid gap-6 grid-cols-1 sm:grid-cols-2"
+            data-testid="projects-grid"
           >
-            {visible.map((project) => (
-              <div
+            {pageSlice.map((project) => (
+              <article
                 key={project.id}
+                className="rounded-sm overflow-hidden shadow-md flex flex-col"
                 style={{
                   borderRadius: "2.93px",
-                  overflow: "hidden",
                   boxShadow: "0px 2px 8px rgba(0,0,0,0.08)",
                 }}
               >
-                {/* Photo */}
                 <div
+                  className="w-full relative bg-[#E2E8F0]"
                   style={{
-                    width: "100%",
                     height: "180.74px",
                     backgroundImage: `url(${project.image})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
-                    backgroundColor: "#B0C4D8",
                   }}
                 />
 
-                {/* Blue banner */}
                 <div
-                  style={{
-                    backgroundColor: "#0379B9",
-                    padding: "10px 14.63px",
-                    height: "61.27px",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    boxSizing: "border-box",
-                  }}
+                  className="bg-[#0379B9] px-4 py-2 flex flex-col justify-center"
+                  style={{ height: "61.27px", boxSizing: "border-box" }}
                 >
                   <div
+                    className="text-white font-bold"
                     style={{
                       fontFamily: "'Work Sans', sans-serif",
-                      fontWeight: 700,
                       fontSize: "14.63px",
                       lineHeight: "1.2em",
-                      color: "#FFFFFF",
                     }}
                   >
                     {project.title}
                   </div>
                   <div
+                    className="text-white font-normal mt-1"
                     style={{
                       fontFamily: "'Work Sans', sans-serif",
-                      fontWeight: 400,
                       fontSize: "11.71px",
                       lineHeight: "1.2em",
-                      color: "#FFFFFF",
-                      marginTop: "2px",
                     }}
                   >
                     {project.location}
                   </div>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
 
-          {/* Paginação só com filtro (não em "All") e com 2+ projetos */}
           {showPagination && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "stretch",
-                marginTop: "24px",
-                height: "46.83px",
-              }}
-            >
-              <button
-                aria-label="Back"
-                onClick={() => setPage(Math.max(0, safePage - 1))}
-                style={{
-                  flex: "0 0 215.86px",
-                  backgroundColor: "#292E3D",
-                  color: "#FFFFFF",
-                  fontFamily: "'Work Sans', sans-serif",
-                  fontWeight: 400,
-                  fontSize: "13.17px",
-                  border: "none",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                }}
-              >
-                <span>←</span>
-                <span>Back</span>
-              </button>
-
+            <>
               <div
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "23.4px",
-                }}
+                className="flex items-stretch mt-8 md:mt-10"
+                style={{ height: "46.83px" }}
               >
-                {Array.from({ length: filtered.length }).map((_, i) => (
-                  <div
-                    key={i}
-                    data-testid="pagination-dot"
-                    data-active={safePage === i ? "true" : "false"}
+                <button
+                  type="button"
+                  aria-label="Back"
+                  disabled={safePage <= 0}
+                  onClick={goBack}
+                  className="bg-[#292E3D] text-white border-none flex items-center justify-center gap-2 flex-1 md:flex-none md:w-[215.86px] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  style={{
+                    fontFamily: "'Work Sans', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "13.17px",
+                  }}
+                >
+                  <span aria-hidden>←</span>
+                  <span>Back</span>
+                </button>
+
+                <div className="flex-1 hidden md:flex items-center justify-center gap-6 px-4">
+                  {Array.from({ length: totalPages }).map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      data-testid="pagination-dot"
+                      data-active={safePage === i ? "true" : "false"}
+                      aria-label={`Página ${i + 1} de ${totalPages}`}
+                      aria-current={safePage === i ? "true" : undefined}
+                      onClick={() => setPage(i)}
+                      className="rounded-full shrink-0 cursor-pointer p-0 border-0"
+                      style={{
+                        width: "11.71px",
+                        height: "11.71px",
+                        backgroundColor:
+                          safePage === i ? "#2947A9" : "#F6F8F7",
+                        border:
+                          safePage === i
+                            ? "none"
+                            : "1px solid #E0E3EB",
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  aria-label="Next"
+                  disabled={safePage >= totalPages - 1}
+                  onClick={goNext}
+                  className="bg-[#292E3D] text-white border-none flex items-center justify-center gap-2 flex-1 md:flex-none md:w-[215.86px] md:ml-0 ml-4 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  style={{
+                    fontFamily: "'Work Sans', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "13.17px",
+                  }}
+                >
+                  <span>Next</span>
+                  <span aria-hidden>→</span>
+                </button>
+              </div>
+
+              {/* Bolinhas no mobile (abaixo dos botões) */}
+              <div className="flex md:hidden items-center justify-center gap-4 mt-6">
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <button
+                    key={`m-${i}`}
+                    type="button"
+                    data-testid="pagination-dot-mobile"
+                    aria-label={`Página ${i + 1}`}
                     onClick={() => setPage(i)}
+                    className="rounded-full shrink-0 cursor-pointer p-0 border-0"
                     style={{
                       width: "11.71px",
                       height: "11.71px",
-                      borderRadius: "50%",
-                      backgroundColor: safePage === i ? "#2947A9" : "#F6F8F7",
-                      border: safePage === i ? "none" : "1px solid #E0E3EB",
-                      cursor: "pointer",
-                      flexShrink: 0,
+                      backgroundColor:
+                        safePage === i ? "#2947A9" : "#F6F8F7",
+                      border:
+                        safePage === i ? "none" : "1px solid #E0E3EB",
                     }}
                   />
                 ))}
               </div>
-
-              <button
-                aria-label="Next"
-                onClick={() =>
-                  setPage(Math.min(filtered.length - 1, safePage + 1))
-                }
-                style={{
-                  flex: "0 0 215.86px",
-                  backgroundColor: "#292E3D",
-                  color: "#FFFFFF",
-                  fontFamily: "'Work Sans', sans-serif",
-                  fontWeight: 400,
-                  fontSize: "13.17px",
-                  border: "none",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                }}
-              >
-                <span>Next</span>
-                <span>→</span>
-              </button>
-            </div>
+            </>
           )}
         </div>
       </div>
