@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  /* Figma design tokens */
+  --primary: #2947A9;
+  --primary-dark: #0B267D;
+  --secondary: #F9995D;
+  --blue-accent: #0379B9;
+  --btn-orange: #E4791A;
+
+  --neutral-900: #14171F;
+  --neutral-800: #292E3D;
+  --neutral-700: #3D445C;
+  --neutral-600: #525B7A;
+  --neutral-500: #667299;
+  --neutral-400: #858EAD;
+  --neutral-300: #A3AAC2;
+  --neutral-200: #C2C7D6;
+  --neutral-100: #E0E3EB;
+  --neutral-50: #F6F8F7;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Work Sans', sans-serif;
+  color: var(--neutral-800);
+}
